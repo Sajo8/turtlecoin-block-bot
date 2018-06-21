@@ -44,13 +44,12 @@ print("Block reward:", reward, "TRTL")
 
 
 #transaction hashes. str
-txs = wd.get_transaction_hashes(addresses='', block_hash="715b65addef977a103e913aebd17071cd8440aefe2a6ad6fd1432b8bcd13efa5", block_count=1, payment_id='')
+txs = wd.get_transaction_hashes(addresses=["TRTLuwiaLFrdZtpApXbf5WT6VtpQrBaPnjQgpgLpjD6sdnz3uwKXxRnamo3SEs7TLpDQwmXTxuppsScAAbpGe7CX8Kdsdrgmz6d"], block_hash="748d6ad93d0d64fe6c5bad40975a09e269f92feb4655bd5c4bab3a6074206939", block_count=1, payment_id='')
 
 print("No. of txs in the block:", len(txs))
 print("Transaction hashes:")
+print(txs)
 
-for tx in txs:
-	print(tx)
 
 
 #discord stuff
