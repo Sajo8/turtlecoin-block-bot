@@ -22,6 +22,8 @@ async def on_ready():
 
 tc = turtlecoin.TurtleCoind(host='public.turtlenode.io', port=11898)
 
+headerbhash = tc.getlastblockheaderbyhash('973e6ce40701a81bc678403abb57cdc1be31249e041cb486751974f60cc90c289')
+print(headerbhash)
 
 tcgl = tc.getlastblockheader()['block_header']
 
@@ -43,7 +45,7 @@ print("Block reward:", reward, "TRTL")
 
 
 #transaction hashes. str
-txs = tc.???
+"""txs = tc.???"""
 
 print("No. of txs in the block:", len(txs))
 print("Transaction hashes:")
