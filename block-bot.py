@@ -2,6 +2,7 @@ import discord
 import asyncio
 import logging
 import turtlecoin
+import json
 
 #discord stuff
 """token = open('tokenfile').read()
@@ -22,9 +23,6 @@ async def on_ready():
 
 tc = turtlecoin.TurtleCoind(host='public.turtlenode.io', port=11898)
 
-headerbhash = tc.getlastblockheaderbyhash('973e6ce40701a81bc678403abb57cdc1be31249e041cb486751974f60cc90c289')
-print(headerbhash)
-
 tcgl = tc.getlastblockheader()['block_header']
 
 #height of the latest block, int
@@ -43,13 +41,18 @@ print("Orphan:", orphan)
 reward = tcgl['reward']
 print("Block reward:", reward, "TRTL")
 
+bsize = tc.getblock(hash)
+print("Size of block:", bsize['block']['blockSize'])
 
 #transaction hashes. str
-"""txs = tc.???"""
+txs = tc.getblock(hash)
+ntxs = len(txs['block']['transactions'])
 
-print("No. of txs in the block:", len(txs))
+print("No. of txs in the block:", ntxs) 
+print("wee woo")
 print("Transaction hashes:")
 print(txs)
+
 
 
 

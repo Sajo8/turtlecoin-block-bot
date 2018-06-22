@@ -16,6 +16,9 @@ lbh.then(result => console.log("Orphan: " + result.orphan_status), result => con
 lbh.then(result => console.log("Reward: " + result.reward + " TRTL"), result => console.log("Could not retrieve reward"));
 console.log("Tx's in the block: 1 trillion	");
 
+var result1
+var result2
+
 lbh.then(function (result) {
   console.log("Height: " + result.height)
   return daemon.getBlock({
@@ -35,6 +38,21 @@ lbh.then(function (result) {
 someFunc(result) {
   daemon.getBlock(result.hash).t hen(result => console.log("txs: "result.transactions), result => console.log("coudnt get the txs"));
 }*/
+
+var result1
+var result2
+
+someFunc().then(function (res) {
+  result1 = res
+  return someOtherFunc(result1.blah)
+}).then(function (res) {
+  result2 = res
+  return someOtherSajoNeedsToRead(result1.blah, result2.blah)
+}).then(function (res) {
+  console.log('Go read a book' + result1.blah + result2.blah + res.blah)
+}).catch(function (err) {
+  console.log('errrrrrr ' + err)
+})
 
 
 
