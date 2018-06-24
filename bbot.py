@@ -3,7 +3,6 @@ import asyncio
 import logging
 import turtlecoin
 import json
-import requests
 import time
 
 #discord stuff
@@ -20,8 +19,8 @@ tc = turtlecoin.TurtleCoind(host='public.turtlenode.io', port=11898)
 
 tcgl = tc.getlastblockheader()['block_header']
 
-def hi():
-	"""last_height = 0
+"""def hi():
+	last_height = 0
 	height = 0
 
 	while True:
@@ -52,7 +51,8 @@ breward = reward / 100
 
 timex = tcgl['timestamp']
 prevhash = tcgl['prev_hash']
-time2 = tc.getlastblockheaderbyhash(prevhash)['block_header']['timestamp']
+glb = tc.getblock(prevhash)
+time2 = glb['block']['timestamp']
 timed = timex - time2
 rock = "235707623985512451"
 blocktime = "Time took to make: "
@@ -80,8 +80,10 @@ for hash in hashes:
 	#tx extra hash
 	teta = tc.gettransaction(hash)['tx']['extra']
 #	Decoded version of tx_extra:
-	data = '{"jsonrpc":"2.0","id":"test","method":"f_transaction_json","params":{"hash":teta}}'
-	response = requests.post('https://blocks.turtle.link/daemon/json_rpc', data=data)
+	try:
+		deteta = bytes.fromhex(teta[66:]).decode('utf-8')
+	except UnicodeDecodeError:
+		deteta = "unable to decode, probably nothing in there"
 
 	#hex decode tx extra somehow
 
@@ -93,49 +95,36 @@ txep = txes/bsizes * 100
 
 def getstats():
 	#height of the latest block, int
-	height 
-
+	height
 	#hash of the latest block. str
 	hash 
-
 	#if latest block is orphan or not. bool(str) 
 	orphan 
-	
 	#reward of the latest block. int
 	breward
-
 	#if time block took to make is acceptable
 	blocktime
-
 	# size of block
 	bsizes
-
 	#transaction hashes. str
 	ntxs
-
 	#hash of each tx in the block
 	hashes
-
 	#size of each tx
 	hahsizes
-
 	#print("Total size of the transactions:")
 	txsizes
-
-	#print out all the hashes and tx_Extra hash
+	#print out the tx_Extra hash and its decoded version
 	teta
-
-	response
-	
+	deteta
 	#size of tx extra
 	txes
-
 	#percentage of txs in block
 	txp
-
 	#percentage of tx_extra in block
 	txep
 
+getstats()
 
 printstats = """We just found a block!
 
@@ -152,45 +141,37 @@ Size of each tx: {hashsizes}
 Size of all the txs: {txsizes}
 
 tx_extra hash: {teta}
-Decoded version of tx_extra: {response} (this is borken i need help)
+Decoded version of tx_extra: {deteta}
 Size of tx_extra: {txes} au
 
 Percentage of txs in the block: {txp} %
 Percentage of tx_extra in the block: {txep} %
 
-""".format(height=height, hash=hash, orphan=orphan, reward=breward, bsizes=bsizes, ntxs=ntxs, hashes=hashes, hashsizes=hahsizes, blocktime=blocktime, teta=teta, response=response, txes=txes, txp=txp, txep=txep, txsizes=txsizes)
+-----------------------------------------------
+""".format(height=height, hash=hash, orphan=orphan, reward=breward, bsizes=bsizes, ntxs=ntxs, hashes=hashes, hashsizes=hahsizes, blocktime=blocktime, teta=teta, deteta=deteta, txes=txes, txp=txp, txep=txep, txsizes=txsizes)
 
-print(printstats)
+while True:
+	getstats()
+
 
 @client.event
 async def on_ready():
 	print("connected")
 	await client.send_message(discord.Object(id='459931714471460864'), printstats)
 	while True:
-		nheight = tcgl['height']
+		nheight = tc.getblockcount()['count']
 		if nheight != height:
-			getstats()
-			await client.send_message(discord.Object(id='459931714471460864'), printstats)
+			print(nheight)
+			print(height)
 			print(printstats)
-			time.sleep(1)
+			await client.send_message(discord.Object(id='459931714471460864'), printstats)
+			time.sleep(0.4)
 		else:
 			print("nope")
-			time.sleep(1)
+			print(neight)
+			print(height)
+			time.sleep(0.4)
 
 
-
-
-"""@client.event
-async def height():
-	while True:
-		nheight = tcgl['height']
-		if nheight != height:
-			getstats()
-			await client.send_message(discord.Object(id='459931714471460864'), printstats)
-			print(printstats)
-			sleep(5)
-		else:
-			print("nope")
-			sleep(5)"""
 
 client.run(token)
