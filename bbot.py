@@ -4,6 +4,7 @@ import logging
 import turtlecoin
 import json
 import time
+import random
 
 #discord stuff
 token = open('tokenfile').read()
@@ -19,7 +20,7 @@ tc = turtlecoin.TurtleCoind(host='public.turtlenode.io', port=11898)
 
 tcgl = tc.getlastblockheader()['block_header']
 
-def getstats():
+def getstats(height):
 
 	height = tcgl['height']
 	hash = tcgl['hash']
@@ -60,7 +61,7 @@ def getstats():
 		teta = tc.gettransaction(hash)['tx']['extra']
 	#	Decoded version of tx_extra:
 		try:
-			deteta = bytes.fromhex(teta[66:]).decode('utf-8')
+			deteta = bytes.fromhex(hash).decode('utf-8')
 		except UnicodeDecodeError:
 			deteta = "unable to decode, probably nothing in there"
 
@@ -127,20 +128,26 @@ def prettyPrintStats(blockstats):
 
 	return msg
 
+
 @client.event
 async def on_ready():
 	print("connected")
 	height = tcgl['height']
 	while True:
+		#prettyPrintStats(getstats(nheight))	
 		nheight = tc.getblockcount()['count']
-		print(nheight)
-		print(height)
 		if height != nheight:
-			await client.send_message(discord.Object(id='459931714471460864'), prettyPrintStats(nheight))
-			height = nheight
-			print(height)
-			print(nheight)
-		time.sleep(0.4)
+			try:
+				await client.send_message(discord.Object(id='459931714471460864'), prettyPrintStats(getstats(nheight)))
+				print("val changed")
+				print(nheight)
+				print(height)
+				height = nheight
+				print(height)
+				time.sleep(0.4)
+			except:
+				print("took too long m8")
+
 	
 
 	"""await client.send_message(discord.Object(id='459931714471460864'), printstats)
