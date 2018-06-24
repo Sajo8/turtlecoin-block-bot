@@ -20,11 +20,7 @@ tc = turtlecoin.TurtleCoind(host='public.turtlenode.io', port=11898)
 
 tcgl = tc.getlastblockheader()['block_header']
 
-
-#discord stuff
-@client.event
-async def on_ready():
-	print("connected")
+def hi():
 	"""last_height = 0
 	height = 0
 
@@ -46,105 +42,99 @@ async def prettyPrintInfo(blockInfo):
 	msg += f"Hash: {blockInfo['hash']}"
 	return msg"""
 
-"""height = " "
-hash = " "
-orphan = " "
-breward = " "
-bsizes = " "
-ntxs = " "
-hashes = " "
-hahsizes = " "
-blocktime = " "
-teta = " "
-response = " "
-txes = " "
-txp = " "
-txep = " "
-txsizes = " " """
+
+height = tcgl['height']
+hash = tcgl['hash']
+orphan = tcgl['orphan_status']
+
+reward = tcgl['reward']
+breward = reward / 100
+
+timex = tcgl['timestamp']
+prevhash = tcgl['prev_hash']
+time2 = tc.getlastblockheaderbyhash(prevhash)['block_header']['timestamp']
+timed = timex - time2
+rock = "235707623985512451"
+blocktime = "Time took to make: "
+if timed <= 10:
+	blocktime += "Block was too fast, {timed} seconds <@{rock}>".format(timed=timed, rock=rock)
+elif timed >= 90:
+	blocktime += "Took too long, {timed} seconds. <@{rock}>".format(timed=time, rock=rock)
+else:
+	blocktime += "Took {timed} seconds to make, pretty nice".format(timed=timed)
+
+bsize = tc.getblock(hash)
+bsizes = bsize['block']['blockSize']
+
+txs = tc.getblock(hash)
+ntxs = len(txs['block']['transactions'])
+
+hashes = [x['hash'] for x in txs['block']['transactions']]
+
+hahsizes = [z['size'] for z in txs['block']['transactions']]
+
+txsize = txs['block']
+txsizes = txsize['transactionsCumulativeSize']
+
+for hash in hashes:
+	#tx extra hash
+	teta = tc.gettransaction(hash)['tx']['extra']
+#	Decoded version of tx_extra:
+	data = '{"jsonrpc":"2.0","id":"test","method":"f_transaction_json","params":{"hash":teta}}'
+	response = requests.post('https://blocks.turtle.link/daemon/json_rpc', data=data)
+
+	#hex decode tx extra somehow
+
+txes =  bsizes-txsizes
+
+txp = txsizes/bsizes * 100
+
+txep = txes/bsizes * 100
 
 def getstats():
 	#height of the latest block, int
-	global height 
-	height = tcgl['height']
+	height 
 
 	#hash of the latest block. str
-	global hash 
-	hash = tcgl['hash']
+	hash 
 
 	#if latest block is orphan or not. bool(str) 
-	global orphan 
-	orphan = tcgl['orphan_status']
-
+	orphan 
+	
 	#reward of the latest block. int
-	reward = tcgl['reward']
-	global breward 
-	breward = reward / 100
+	breward
 
+	#if time block took to make is acceptable
+	blocktime
 
-	time = tcgl['timestamp']
-	prevhash = tcgl['prev_hash']
-	time2 = tc.getlastblockheaderbyhash(prevhash)['block_header']['timestamp']
-
-	timed = time - time2
-	rock = "235707623985512451"
-	global blocktime 
-	blocktime = "Time took to make: "
-
-	if timed <= 10:
-		blocktime += "Block was too fast, {timed} seconds <@{rock}>".format(timed=timed, rock=rock)
-	elif timed >= 90:
-		blocktime += "Took too long, {timed} seconds. <@{rock}>".format(timed=time, rock=rock)
-	else:
-		blocktime += "Took {timed} seconds to make, pretty nice".format(timed=timed)
-
-	bsize = tc.getblock(hash)
-	global bsizes
-	bsizes = bsize['block']['blockSize']
+	# size of block
+	bsizes
 
 	#transaction hashes. str
-	txs = tc.getblock(hash)
-	global ntxs
-	ntxs = len(txs['block']['transactions'])
+	ntxs
 
 	#hash of each tx in the block
-	global hashes
-	hashes = [x['hash'] for x in txs['block']['transactions']]
+	hashes
 
 	#size of each tx
-	global hahsizes
-	hahsizes = [z['size'] for z in txs['block']['transactions']]
-
+	hahsizes
 
 	#print("Total size of the transactions:")
-	txsize = txs['block']
-	global txsizes
-	txsizes = txsize['transactionsCumulativeSize']
+	txsizes
 
+	#print out all the hashes and tx_Extra hash
+	teta
 
-	for hash in hashes:
-		#tx extra hash
-		global teta
-		teta = tc.gettransaction(hash)['tx']['extra']
-
-	#	Decoded version of tx_extra:
-		data = '{"jsonrpc":"2.0","id":"test","method":"f_transaction_json","params":{"hash":teta}}'
-		global response
-		response = requests.post('https://blocks.turtle.link/daemon/json_rpc', data=data)
-
-		# idk how to hex decode mman 
-		# hex decode the tx extras some how
+	response
 	
 	#size of tx extra
-	global txes
-	txes =  bsizes-txsizes
-
+	txes
 
 	#percentage of txs in block
-	global txp
-	txp = txsizes/bsizes * 100
+	txp
+
 	#percentage of tx_extra in block
-	global txep
-	txep = txes/bsizes * 100
+	txep
 
 
 printstats = """We just found a block!
@@ -172,18 +162,35 @@ Percentage of tx_extra in the block: {txep} %
 
 print(printstats)
 
-
 @client.event
-async def upheight():
+async def on_ready():
+	print("connected")
+	await client.send_message(discord.Object(id='459931714471460864'), printstats)
 	while True:
 		nheight = tcgl['height']
 		if nheight != height:
 			getstats()
 			await client.send_message(discord.Object(id='459931714471460864'), printstats)
-			print("printstats")
+			print(printstats)
+			time.sleep(1)
+		else:
+			print("nope")
+			time.sleep(1)
+
+
+
+
+"""@client.event
+async def height():
+	while True:
+		nheight = tcgl['height']
+		if nheight != height:
+			getstats()
+			await client.send_message(discord.Object(id='459931714471460864'), printstats)
+			print(printstats)
 			sleep(5)
 		else:
 			print("nope")
-			sleep(5)
+			sleep(5)"""
 
 client.run(token)
