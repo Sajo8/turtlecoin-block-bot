@@ -107,25 +107,25 @@ def getstats(height):
 	#txep
 
 def prettyPrintStats(blockstats):
-	msg = "BLOCK STATS:\n"
-	msg += "Height: {} \n".format(blockstats['height'])
-	msg += "Hash: {} \n".format(blockstats['hash'])
-	msg += "Orphan: {} \n".format(blockstats['orphan'])
-	msg += "Reward {} \n".format(blockstats['reward'])
-	msg += "Size: {} \n".format(blockstats['bsizes'])
-	msg += "Time took to make: {}".format(blockstats['blocktime'])
+	msg = "WE FOUND A NEW BLOCK!:\n"
+	msg += "\n**Height:** {} \n".format(blockstats['height'])
+	msg += "**Hash:** {} \n".format(blockstats['hash'])
+	msg += "**Orphan:** {} \n".format(blockstats['orphan'])
+	msg += "**Reward:** {} \n".format(blockstats['reward'])
+	msg += "**Size:** {} \n".format(blockstats['bsizes'])
+	msg += "**Time took to make:** {} \n".format(blockstats['blocktime'])
 
-	msg += " \nNo. of txs in the block: {} \n".format(blockstats['ntxs'])
-	msg += "Tx hashes in the block: {} \n".format(blockstats['hashes'])
-	msg += "Size of each tx: {} \n".format(blockstats['hahsizes'])
-	msg += "Size of all the txs: {} \n".format(blockstats['txsizes'])
+	msg += " \n**No. of txs in the block:** {} \n".format(blockstats['ntxs'])
+	msg += "**Tx hashes in the block:** {} \n".format(blockstats['hashes'])
+	msg += "**Size of each tx:** {} \n".format(blockstats['hahsizes'])
+	msg += "**Size of all the txs:** {} \n \n".format(blockstats['txsizes'])
 
-	msg += "tx_extra hash: {} \n".format(blockstats['teta'])
-	msg += "Decoded version of tx_extra: {} \n".format(blockstats['deteta'])
-	msg += "Size of tx_extra: {} \n".format(blockstats['txes'])
+	msg += "**tx_extra hash:** {} \n".format(blockstats['teta'])
+	msg += "**Decoded version of tx_extra:** {} \n".format(blockstats['deteta'])
+	msg += "**Size of tx_extra:** {} \n \n".format(blockstats['txes'])
 
-	msg += "Percentage of txs in the block: {} % \n".format(blockstats['txp'])
-	msg += "Percentage of tx_extra in the block: {} % \n".format(blockstats['txep'])
+	msg += "**Percentage of txs in the block:** {} % \n".format(blockstats['txp'])
+	msg += "**Percentage of tx_extra in the block:** {} % \n".format(blockstats['txep'])
 
 	msg += "------------------"
 
