@@ -137,16 +137,14 @@ async def on_ready():
 		#prettyPrintStats(getstats(nheight))	
 		nheight = tc.getblockcount()['count']
 		if height != nheight:
-			try:
-				await client.send_message(discord.Object(id='459931714471460864'), prettyPrintStats(getstats(nheight)))
-				print("val changed")
-				print(nheight)
-				print(height)
-				height = nheight
-				print(height)
-				time.sleep(0.4)
-			except:
-				print("took too long m8")
+			prettyPrintStats(getStats(nheight))
+			await client.send_message(discord.Object(id='459931714471460864'), prettyPrintStats(getstats(nheight)))
+			print("val changed")
+			print(nheight)
+			print(height)
+			height = nheight
+			print(height)
+			await asyncio.sleep(0.4)
 
 	
 
