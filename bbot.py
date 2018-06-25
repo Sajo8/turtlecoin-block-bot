@@ -18,9 +18,12 @@ client = discord.Client()
 
 tc = turtlecoin.TurtleCoind(host='public.turtlenode.io', port=11898)
 
-tcgl = tc.getlastblockheader()['block_header']
+tclbh = tc.getlastblockheader()['block_header']
+
 
 def getstats(height):
+
+	tcgl = tc.getlastblockheader()['block_header']
 
 	height = tcgl['height']
 	hash = tcgl['hash']
@@ -132,62 +135,19 @@ def prettyPrintStats(blockstats):
 @client.event
 async def on_ready():
 	print("connected")
-	height = tcgl['height']
+	height = tclbh['height']
 	while True:
 		#prettyPrintStats(getstats(nheight))	
 		nheight = tc.getblockcount()['count']
 		if height != nheight:
-			prettyPrintStats(getStats(nheight))
+			prettyPrintStats(getstats(nheight))
 			await client.send_message(discord.Object(id='459931714471460864'), prettyPrintStats(getstats(nheight)))
 			print("val changed")
 			print(nheight)
 			print(height)
 			height = nheight
 			print(height)
-			await asyncio.sleep(0.4)
-
-	
-
-	"""await client.send_message(discord.Object(id='459931714471460864'), printstats)
-	while True:
-		nheight = tc.getblockcount()['count']
-		if nheight != height:
-			print(nheight)
-			print(height)
-			print(printstats)
-			await client.send_message(discord.Object(id='459931714471460864'), printstats)
-			time.sleep(0.4)
-		else:
-			print("nope")
-			print(neight)
-			print(height)
-			time.sleep(0.4)"""
-
-
-"""printstats = We just found a block!
-
-Height: {height}
-Hash: {hash}
-Orphan: {orphan}
-Reward: {reward}
-Block size: {bsizes}
-{blocktime}
-
-No. of txs in the block: {ntxs}
-Tx hashes in the block: {hashes}
-Size of each tx: {hashsizes}
-Size of all the txs: {txsizes}
-
-tx_extra hash: {teta}
-Decoded version of tx_extra: {deteta}
-Size of tx_extra: {txes} au
-
-Percentage of txs in the block: {txp} %
-Percentage of tx_extra in the block: {txep} %
-
------------------------------------------------
-.format(height=height, hash=hash, orphan=orphan, reward=breward, bsizes=bsizes, ntxs=ntxs, hashes=hashes, hashsizes=hahsizes, blocktime=blocktime, teta=teta, deteta=deteta, txes=txes, txp=txp, txep=txep, txsizes=txsizes)"""
-
+		await asyncio.sleep(5)
 
 
 client.run(token)
