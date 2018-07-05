@@ -1,6 +1,5 @@
 import discord
 import asyncio
-import logging
 import turtlecoin
 import json
 import time
@@ -10,11 +9,6 @@ import random
 token = open('tokenfile').read()
 client = discord.Client()
 
-"""'def prettyPrintDict(dict):
-	try:
-		print (json.dumps(dict, indent=4, sort_keys=True))
-	except Exception as e:
-		print('{}, Error: {}'.format('Failed to decode dict as json', e))"""
 
 tc = turtlecoin.TurtleCoind(host='public.turtlenode.io', port=11898)
 
@@ -25,109 +19,98 @@ def getstats(height):
 
 	tcgl = tc.getlastblockheader()['block_header']
 
+	#height of the latest block
 	height = tcgl['height']
+	#hash of latest block
 	hash = tcgl['hash']
+	# whether atest block is orphan or not
 	orphan = tcgl['orphan_status']
 
+	#reward of the latest block
 	reward = tcgl['reward']
 	breward = reward / 100
 
+	#wheter the time the block took to make is acceptable or not
 	timex = tcgl['timestamp']
 	prevhash = tcgl['prev_hash']
 	glb = tc.getblock(prevhash)
 	time2 = glb['block']['timestamp']
 	timed = timex - time2
-	rock = "235707623985512451"
+	rock = "388916188715155467"
+	pingrock = "<@rock>"
 	blocktime = ""
 	if timed <= 10:
-		blocktime += "Block was too fast, {timed} seconds <@{rock}>".format(timed=timed, rock=rock)
+		blocktime += "Block was too fast, {timed} seconds".format(timed=timed, rock=rock)
+		pingrock += ""
 	elif timed >= 90:
 		blocktime += "Took too long, {timed} seconds. <@{rock}>".format(timed=time, rock=rock)
+		pingrock += "'"
 	else:
 		blocktime += "Took {timed} seconds to make, pretty nice".format(timed=timed)
+		pingrock = ""
 
+	#size of the block
 	bsize = tc.getblock(hash)
 	bsizes = bsize['block']['blockSize']
 
+	# number of transaction hashes in the block
 	txs = tc.getblock(hash)
 	ntxs = len(txs['block']['transactions'])
 
+	#each tx hash in the block
 	hashes = [x['hash'] for x in txs['block']['transactions']]
 
+	# size of each tx
 	hahsizes = [z['size'] for z in txs['block']['transactions']]
 
+	#size of all the txs
 	txsize = txs['block']
 	txsizes = txsize['transactionsCumulativeSize']
+
 
 	for hash in hashes:
 		#tx extra hash
 		teta = tc.gettransaction(hash)['tx']['extra']
-	#	Decoded version of tx_extra:
+		#Decoded version of tx_extra:
 		try:
-			deteta = bytes.fromhex(hash).decode('utf-8')
+			deteta = bytes.fromhex(teta).decode('utf-8')
 		except UnicodeDecodeError:
 			deteta = "unable to decode, probably nothing in there"
 
+	#size of tx extra		
 	txes =  bsizes-txsizes
 
+	# % of txs in the block
 	txp = txsizes/bsizes * 100
 
+	# % of tx_extra in the block
 	txep = txes/bsizes * 100
 
-	return {'height': height, 'hash': hash, 'orphan': orphan, 'reward': breward, 'bsizes': bsizes, 'blocktime': blocktime, 'ntxs': ntxs, 'hashes': hashes, 'hahsizes': hahsizes, 'txsizes': txsizes, 'teta': teta, 'deteta': deteta, 'txes': txes, 'txp': txp, 'txep': txep}
+	return {'height': height, 'hash': hash, 'orphan': orphan, 'reward': breward, 'bsizes': bsizes, 'blocktime': blocktime, 'ntxs': ntxs, 'hashes': hashes, 'hahsizes': hahsizes, 'txsizes': txsizes, 'teta': teta, 'deteta': deteta, 'txes': txes, 'txp': txp, 'txep': txep, 'pingrock': pingrock}
 
-	#height of the latest block, int
-	#height
-	#hash of the latest block. str
-	#hash 
-	#if latest block is orphan or not. bool(str) 
-	#orphan 
-	#reward of the latest block. int
-	#breward
-	#if time block took to make is acceptable
-	#blocktime
-	# size of block
-	#bsizes
-	#transaction hashes. str
-	#ntxs
-	#hash of each tx in the block
-	#hashes
-	#size of each tx
-	#hahsizes
-	#print("Total size of the transactions:")
-	#txsizes
-	#print out the tx_Extra hash and its decoded version
-	#teta
-	#deteta
-	#size of tx extra
-	#txes
-	#percentage of txs in block
-	#txp
-	#percentage of tx_extra in block
-	#txep
 
 def prettyPrintStats(blockstats):
-	msg = "WE FOUND A NEW BLOCK!:\n"
-	msg += "\n**Height:** {} \n".format(blockstats['height'])
-	msg += "**Hash:** {} \n".format(blockstats['hash'])
-	msg += "**Orphan:** {} \n".format(blockstats['orphan'])
-	msg += "**Reward:** {} \n".format(blockstats['reward'])
-	msg += "**Size:** {} \n".format(blockstats['bsizes'])
-	msg += "**Time took to make:** {} \n".format(blockstats['blocktime'])
+	msg = "```WE FOUND A NEW BLOCK!\n"
+	msg += "\nHeight: {} \n".format(blockstats['height'])
+	msg += "Hash: {} \n".format(blockstats['hash'])
+	msg += "Orphan: {} \n".format(blockstats['orphan'])
+	msg += "Reward: {} \n".format(blockstats['reward'])
+	msg += "Size: {} \n".format(blockstats['bsizes'])
+	msg += "Time took to make: {} \n".format(blockstats['blocktime'])
 
-	msg += " \n**No. of txs in the block:** {} \n".format(blockstats['ntxs'])
-	msg += "**Tx hashes in the block:** {} \n".format(blockstats['hashes'])
-	msg += "**Size of each tx:** {} \n".format(blockstats['hahsizes'])
-	msg += "**Size of all the txs:** {} \n \n".format(blockstats['txsizes'])
+	msg += " \nNo. of txs in the block: {} \n".format(blockstats['ntxs'])
+	msg += "Tx hashes in the block: {} \n".format(blockstats['hashes'])
+	msg += "Size of each tx: {} \n".format(blockstats['hahsizes'])
+	msg += "Size of all the txs: {} \n \n".format(blockstats['txsizes'])
 
-	msg += "**tx_extra hash:** {} \n".format(blockstats['teta'])
-	msg += "**Decoded version of tx_extra:** {} \n".format(blockstats['deteta'])
-	msg += "**Size of tx_extra:** {} \n \n".format(blockstats['txes'])
+	msg += "tx_extra hash: {} \n".format(blockstats['teta'])
+	msg += "Decoded version of tx_extra: {} \n".format(blockstats['deteta'])
+	msg += "Size of tx_extra: {} \n \n".format(blockstats['txes'])
 
-	msg += "**Percentage of txs in the block:** {} % \n".format(blockstats['txp'])
-	msg += "**Percentage of tx_extra in the block:** {} % \n".format(blockstats['txep'])
+	msg += "Percentage of txs in the block: {} % \n".format(blockstats['txp'])
+	msg += "Percentage of tx_extra in the block: {} % ```".format(blockstats['txep'])
 
-	msg += "------------------"
+	msg += blockstats['pingrock'
 
 	return msg
 
@@ -147,7 +130,7 @@ async def on_ready():
 			print(height)
 			height = nheight
 			print(height)
-		await asyncio.sleep(5)
+		await asyncio.sleep(0.5)
 
 
 client.run(token)
