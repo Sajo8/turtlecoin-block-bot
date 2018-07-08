@@ -12,12 +12,11 @@ client = discord.Client()
 
 tc = turtlecoin.TurtleCoind(host='public.turtlenode.io', port=11898)
 
-tclbh = tc.getlastblockheader()['block_header']
-
+tclbh = tc.get_last_block_header()['result']
 
 def getstats(height):
 
-	tcgl = tc.getlastblockheader()['block_header']
+	tcgl = tc.get_last_block_header()['result']['block_header']
 
 	#height of the latest block
 	height = tcgl['height']
@@ -37,14 +36,14 @@ def getstats(height):
 	time2 = glb['block']['timestamp']
 	timed = timex - time2
 	rock = "388916188715155467"
-	pingrock = "<@rock>"
+	pingrock = "<@" + rock + ">"
 	blocktime = ""
-	if timed <= 10:
-		blocktime += "Block was too fast, {timed} seconds".format(timed=timed, rock=rock)
+	if timed <= 4:
+		blocktime += "Block was too fast, {timed} seconds".format(timed=timed)
 		pingrock += ""
 	elif timed >= 90:
-		blocktime += "Took too long, {timed} seconds. <@{rock}>".format(timed=time, rock=rock)
-		pingrock += "'"
+		blocktime += f'Took too long, {timed} seconds.'
+		pingrock += ""
 	else:
 		blocktime += "Took {timed} seconds to make, pretty nice".format(timed=timed)
 		pingrock = ""
@@ -75,7 +74,8 @@ def getstats(height):
 		try:
 			deteta = bytes.fromhex(teta).decode('utf-8')
 		except UnicodeDecodeError:
-			deteta = "unable to decode, probably nothing in there"
+			print("deta oops")
+			#deteta = "unable to decode, probably nothing in there"
 
 	#size of tx extra		
 	txes =  bsizes-txsizes
@@ -110,9 +110,10 @@ def prettyPrintStats(blockstats):
 	msg += "Percentage of txs in the block: {} % \n".format(blockstats['txp'])
 	msg += "Percentage of tx_extra in the block: {} % ```".format(blockstats['txep'])
 
-	msg += blockstats['pingrock'
+	#msg += blockstats['pingrock']
 
 	return msg
+	print(msg)
 
 
 @client.event
