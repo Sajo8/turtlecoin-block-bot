@@ -38,17 +38,19 @@ def decode_tx_extra(tx_extra_hex):
 			curr_index = len(tx_extra_hex)
 		elif tx_extra_hex.startswith('01', curr_index):  # payment ID
 			curr_index += 2
-			payment_id = tx_extra_hex[curr_index:curr_index + 65]
-			curr_index += 65
+			payment_id = tx_extra_hex[curr_index:curr_index + 64]
+			curr_index += 64
 		elif tx_extra_hex.startswith('02', curr_index):  # extra nonce (custom data)
 			# next byte will specify size
-			subfield_size = int(tx_extra_hex[curr_index:curr_index + 2], 16)
+			curr_index += 2
+			subfield_size = 2 * int(tx_extra_hex[curr_index:curr_index + 2], 16)
 			curr_index += 2
 			data = tx_extra_hex[curr_index:curr_index + subfield_size]
+			curr_index += subfield_size
 			custom_data_arr.append(data)
 			curr_index += subfield_size
 		else:
-			tx_extra_decoded += "Hm, something went wrong. I got an invalid subfield tag of {tag}\n".format(tag=tx_extra_hex[curr_index:])
+			tx_extra_decoded += "Hm, something went wrong. I got an invalid subfield tag of {tag}\n".format(tag=tx_extra_hex[curr_index:curr_index + 2])
 			curr_index += 2
 
 	tx_extra_decoded += "Payment ID: {}\n".format(payment_id)
