@@ -8,6 +8,8 @@ import random
 
 # discord stuff
 client = None
+tc = None
+tclbh = None
 token = open('tokenfile').read()
 
 if token:
@@ -17,9 +19,53 @@ if token:
 		client = discord.Client()
 
 
-tc = turtlecoin.TurtleCoind(host='public.turtlenode.io', port=11898)
+def connect_to_turtlecoind():
+	global tc
+	global tclbh
+	tc = turtlecoin.TurtleCoind(host='public.turtlenode.io', port=11898)
+	tclbh = tc.get_last_block_header()['result']
 
-tclbh = tc.get_last_block_header()['result']
+
+def decode_tx_extra(tx_extra_hex):
+	curr_index = 0
+	custom_data_arr = []
+	tx_extra_decoded = ''
+
+	while(curr_index < len(tx_extra_hex)):
+		# these are special cases. See https://cryptonote.org/cns/cns005.txt
+		if tx_extra_hex.startswith('00', curr_index):  # padding
+			# All zeroes from here. No need to report this. We're done!
+			curr_index = len(tx_extra_hex)
+		elif tx_extra_hex.startswith('01', curr_index):  # payment ID
+			curr_index += 2
+			payment_id = tx_extra_hex[curr_index:curr_index + 65]
+			curr_index += 65
+		elif tx_extra_hex.startswith('02', curr_index):  # extra nonce (custom data)
+			# next byte will specify size
+			subfield_size = int(tx_extra_hex[curr_index:curr_index + 2], 16)
+			curr_index += 2
+			data = tx_extra_hex[curr_index:curr_index + subfield_size]
+			custom_data_arr.append(data)
+			curr_index += subfield_size
+		else:
+			tx_extra_decoded += "Hm, something went wrong. I got an invalid subfield tag of {tag}\n".format(tag=tx_extra_hex[curr_index:])
+			curr_index += 2
+
+	tx_extra_decoded += "Payment ID: {}\n".format(payment_id)
+
+	for hash in custom_data_arr:
+		utf8_str = None
+		tx_extra_decoded += "Custom Data Hex: {}\n".format(hash)
+		# try decoding as utf-8 data as well
+		try:
+			utf8_str = bytearray.fromhex(hash).decode()
+		except ValueError as err:
+			pass
+
+		if utf8_str:
+			tx_extra_decoded += "Custom Data UTF-8: {}\n".format(utf8_str)
+
+	return tx_extra_decoded
 
 
 def getstats(height):
@@ -77,11 +123,7 @@ def getstats(height):
 		# tx extra hash
 		teta = tc.get_transaction(hash)['result']['tx']['extra']
 		# Decoded version of tx_extra:
-		try:
-			deteta = bytes.fromhex(teta).decode('utf-8')
-		except UnicodeDecodeError:
-			print("deta oops")
-			deteta = "unable to decode, probably nothing in there"
+		deteta = decode_tx_extra(teta)
 
 	# size of tx extra
 	txes = bsizes - txsizes
@@ -153,12 +195,15 @@ async def on_ready():
 
 
 def start_local_event_loop():
+	print("*** Starting local event loop with TurtleCoind ***")
 	loop = asyncio.get_event_loop()
 	loop.run_until_complete(on_ready())
 	loop.close()
 
 
 if __name__ == '__main__':
+	connect_to_turtlecoind()
+
 	if client:
 		client.run(token)
 	else:
