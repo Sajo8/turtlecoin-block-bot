@@ -2,6 +2,7 @@ import discord
 import asyncio
 import turtlecoin
 import json
+import sys
 import time
 import random
 
@@ -22,7 +23,6 @@ tclbh = tc.get_last_block_header()['result']
 
 
 def getstats(height):
-
 	tcgl = tc.get_last_block_header()['result']['block_header']
 
 	# height of the latest block
@@ -158,7 +158,12 @@ def start_local_event_loop():
 	loop.close()
 
 
-if client:
-	client.run(token)
-else:
-	start_local_event_loop()
+if __name__ == '__main__':
+	if client:
+		client.run(token)
+	else:
+		try:
+			start_local_event_loop()
+		except KeyboardInterrupt as err:
+			print("\nShutdown requested. Exiting...")
+			sys.exit(0)
