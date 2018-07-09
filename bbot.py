@@ -32,7 +32,11 @@ def decode_tx_extra(tx_extra_hex):
 	"""
 	curr_index = 0
 	custom_data_arr = []
+	payment_id = None
 	tx_extra_decoded = ''
+
+	if not isinstance(tx_extra_hex, str):
+		return tx_extra_decoded
 
 	while(curr_index < len(tx_extra_hex)):
 		# Each subfield must begin with a tag 00, 01, or 02
@@ -56,7 +60,8 @@ def decode_tx_extra(tx_extra_hex):
 			tx_extra_decoded += "Hm, something went wrong. I got an invalid subfield tag of {tag}\n".format(tag=tx_extra_hex[curr_index:curr_index + 2])
 			curr_index += 2
 
-	tx_extra_decoded += "Payment ID: {}\n".format(payment_id)
+	if payment_id:
+		tx_extra_decoded += "Payment ID: {}\n".format(payment_id)
 
 	for hash in custom_data_arr:
 		utf8_str = None

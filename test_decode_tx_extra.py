@@ -1,3 +1,8 @@
+####
+# Test file for the decode_tx_extra() method.
+# Run with pytest
+####
+
 from bbot import decode_tx_extra
 
 
@@ -15,7 +20,7 @@ known_results = [
     'Payment ID: 5869cf42752bac16fbb1d00789da0d48864bd20b1bd3b89a91e0609fa8100fef\n'  # cont...
     'Custom Data Hex: 0000000019eaddaf\n',
     'Payment ID: a248ff5495efddab4db813898e44dcb4d5b1c9c38fff72dc8ef19087ee6829a7\n'  # cont...
-    'Custom Data Hex: 002c86158da497d1484f7097a0074fdbbe7bb2615b625133bc549516b94f84b7d2\n',
+    'Custom Data Hex: 002c86158da497d1484f7097a0074fdbbe7bb2615b625133bc549516b94f84b7d2\n'
 ]
 
 
@@ -25,3 +30,22 @@ def test_known_hashes():
         result = decode_tx_extra(hash)
         print(result)
         assert result == known_results[i]
+
+
+def test_bad_data():
+    bad_tx_etra_hash = '69207468696E6B207520776F6E2074686520626F756E7479'
+    result = decode_tx_extra(bad_tx_etra_hash)
+    print(result)
+    assert 'Hm, something went wrong.' in result
+
+
+def test_empty_string():
+    result = decode_tx_extra('')
+    print(result)
+    assert result == ''
+
+
+def test_wrong_arguments():
+    result = decode_tx_extra(None)
+    print(result)
+    assert result == ''
