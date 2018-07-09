@@ -27,12 +27,15 @@ def connect_to_turtlecoind():
 
 
 def decode_tx_extra(tx_extra_hex):
+	"""Returns string data decoded from the Transaction Extra Field
+	See https://cryptonote.org/cns/cns005.txt for proper formatting of tx_extra_hex
+	"""
 	curr_index = 0
 	custom_data_arr = []
 	tx_extra_decoded = ''
 
 	while(curr_index < len(tx_extra_hex)):
-		# these are special cases. See https://cryptonote.org/cns/cns005.txt
+		# Each subfield must begin with a tag 00, 01, or 02
 		if tx_extra_hex.startswith('00', curr_index):  # padding
 			# All zeroes from here. No need to report this. We're done!
 			curr_index = len(tx_extra_hex)
