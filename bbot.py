@@ -9,7 +9,6 @@ import random
 token = open('tokenfile').read()
 client = discord.Client()
 
-
 tc = turtlecoin.TurtleCoind(host='public.turtlenode.io', port=11898)
 
 tclbh = tc.get_last_block_header()['result']
@@ -32,7 +31,7 @@ def getstats(height):
 	#wheter the time the block took to make is acceptable or not
 	timex = tcgl['timestamp']
 	prevhash = tcgl['prev_hash']
-	glb = tc.get_block(prevhash)
+	glb = tc.get_block(prevhash)['result']
 	time2 = glb['block']['timestamp']
 	timed = timex - time2
 	rock = "388916188715155467"
@@ -49,11 +48,11 @@ def getstats(height):
 		pingrock = ""
 
 	#size of the block
-	bsize = tc.get_block(hash)
+	bsize = tc.get_block(hash)['result']
 	bsizes = bsize['block']['blockSize']
 
 	# number of transaction hashes in the block
-	txs = tc.get_block(hash)
+	txs = tc.get_block(hash)['result']
 	ntxs = len(txs['block']['transactions'])
 
 	#each tx hash in the block
@@ -69,13 +68,12 @@ def getstats(height):
 
 	for hash in hashes:
 		#tx extra hash
-		teta = tc.get_transaction(hash)['tx']['extra']
+		teta = tc.get_transaction(hash)['result']['tx']['extra']
 		#Decoded version of tx_extra:
 		try:
 			deteta = bytes.fromhex(teta).decode('utf-8')
 		except UnicodeDecodeError:
-			print("deta oops")
-			#deteta = "unable to decode, probably nothing in there"
+			deteta = "unable to decode, probably nothing in there"
 
 	#size of tx extra		
 	txes =  bsizes-txsizes
@@ -119,12 +117,13 @@ def prettyPrintStats(blockstats):
 @client.event
 async def on_ready():
 	print("connected")
-	height = tclbh['height']
+	height = tclbh['block_header']['height']
 	while True:
 		#prettyPrintStats(getstats(nheight))	
-		nheight = tc.getblockcount()['count']
+		nheight = tc.get_block_count()['result']['count']
 		if height != nheight:
 			prettyPrintStats(getstats(nheight))
+			
 			await client.send_message(discord.Object(id='459931714471460864'), prettyPrintStats(getstats(nheight)))
 			print("val changed")
 			print(nheight)
