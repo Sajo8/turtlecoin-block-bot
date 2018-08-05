@@ -31,7 +31,7 @@ def connect_to_turtlecoind():
 	try:
 		tclbh = tc.get_last_block_header()['result']
 	except (JSONDecodeError, ConnectionError):
-		while tc.getblockcount()['json_rpc'] != "2.0":
+		while tc.get_block_count()['json_rpc'] != "2.0":
 			asyncio.sleep(5)
 			tclbh = tc.get_last_block_header()['result']
 
