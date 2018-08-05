@@ -16,11 +16,11 @@ known_hashes = [
 known_results = [
     '\nPayment ID: 34df59241f0676bd3395b08aa4b5432279d0b02bf7b33800a0c63b66a6250138',
     '\nPayment ID: 4230cfd7909d22bad63fb742331055974f2bd6697cc00b6ceaa44de0a7ad8331'  # cont...
-    '\nCustom Data Hex: 0000000006920e92',
+    '\nCustom Data (hex): 0000000006920e92',
     '\nPayment ID: 5869cf42752bac16fbb1d00789da0d48864bd20b1bd3b89a91e0609fa8100fef'  # cont...
-    '\nCustom Data Hex: 0000000019eaddaf',
+    '\nCustom Data (hex): 0000000019eaddaf',
     '\nPayment ID: a248ff5495efddab4db813898e44dcb4d5b1c9c38fff72dc8ef19087ee6829a7'  # cont...
-    '\nCustom Data Hex: 002c86158da497d1484f7097a0074fdbbe7bb2615b625133bc549516b94f84b7d2'
+    '\nCustom Data (hex): 002c86158da497d1484f7097a0074fdbbe7bb2615b625133bc549516b94f84b7d2'
 ]
 
 

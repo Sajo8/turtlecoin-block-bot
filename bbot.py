@@ -32,16 +32,16 @@ def connect_to_turtlecoind():
 
 
 def decode_tx_extra(tx_extra_hex):
-	"""Returns string data decoded from the Transaction Extra Field
+	"""Returns a list of string data decoded from the Transaction Extra Field
 	See https://cryptonote.org/cns/cns005.txt for proper formatting of tx_extra_hex
 	"""
 	curr_index = 0
 	custom_data_arr = []
 	payment_id = None
-	tx_extra_decoded = ''
+	tx_extra_decoded = []  # decoded data will be a list of strings, to be formatted later
 
 	if not isinstance(tx_extra_hex, str):
-		return tx_extra_decoded
+		raise TypeError(f'decode_tx_extra() expects 1 argument of type string, but received {tx_extra_hex}')
 
 	while(curr_index < len(tx_extra_hex)):
 		# Each subfield must begin with a tag 00, 01, or 02
@@ -62,23 +62,20 @@ def decode_tx_extra(tx_extra_hex):
 			custom_data_arr.append(data)
 			curr_index += subfield_size
 		else:
-			tx_extra_decoded += f"Hm, something went wrong. I got an invalid subfield tag of {tx_extra_hex[curr_index:curr_index + 2]}\n"
+			tx_extra_decoded.append(f"Hm, something went wrong. I got an invalid subfield tag of {tx_extra_hex[curr_index:curr_index + 2]}")
 			curr_index += 2
 
 	if payment_id:
-		tx_extra_decoded += f"\nPayment ID: {payment_id}"
+		tx_extra_decoded.append(f"Payment ID: {payment_id}")
 
 	for hash in custom_data_arr:
-		utf8_str = None
-		tx_extra_decoded += f"\nCustom Data Hex: {hash}"
-		# try decoding as utf-8 data as well
+		tx_extra_decoded.append(f"Custom Data (hex): {hash}")
+		# try decoding the hex bytes as a utf-8 string.
 		try:
-			utf8_str = bytearray.fromhex(hash).decode()
+			str_data = bytearray.fromhex(hash).decode('utf-8')
+			tx_extra_decoded.append(f"Custom Data (utf-8 decoded): {str_data}")
 		except ValueError as err:
 			pass
-
-		if utf8_str:
-			tx_extra_decoded += f"\nCustom Data UTF-8: {utf8_str}"
 
 	return tx_extra_decoded
 
@@ -133,11 +130,14 @@ def getstats(height):
 	txsize = txs['result']['block']
 	txsizes = txsize['transactionsCumulativeSize']
 
+	teta = []
+	deteta = []
+
 	for hash in hashes:
 		# tx extra hash
-		teta = tc.get_transaction(hash)['result']['tx']['extra']
+		teta.append(tc.get_transaction(hash)['result']['tx']['extra'])
 		# Decoded version of tx_extra:
-		deteta = decode_tx_extra(teta)
+		deteta.append(decode_tx_extra(teta))
 
 	# size of tx extra
 	txes = bsizes - txsizes
@@ -160,17 +160,19 @@ def prettyPrintStats(blockstats):
 	msg += "Size: {} \n".format(blockstats['bsizes'])
 	msg += "Time took to make: {} \n".format(blockstats['blocktime'])
 
-	msg += " \nNo. of txs in the block: {} \n".format(blockstats['ntxs'])
-	msg += "Tx hashes in the block: {} \n".format(blockstats['hashes'])
-	msg += "Size of each tx: {} \n".format(blockstats['hahsizes'])
-	msg += "Size of all the txs: {} \n \n".format(blockstats['txsizes'])
+	msg += "\nNo. of txs in the block: {}".format(blockstats['ntxs'])
+	msg += "\nTotal size of the txs: {}".format(blockstats['txsizes'])
+	msg += "\nTotal size of tx_extra(s): {}".format(blockstats['txes'])
+	for idx, hash in enumerate(blockstats['hashes']):
+		msg += f"\n\nTx {idx} (size {blockstats['hahsizes'][idx]}):"
+		msg += f"\n    hash: {hash}"
+		msg += f"\n    tx_extra: {blockstats['teta'][idx]}"
+		if idx < len(blockstats['deteta']):
+			for line in blockstats['deteta'][idx]:
+				msg += f"\n    {line}"
 
-	msg += "tx_extra hash: {} \n".format(blockstats['teta'])
-	msg += "Decoded version of tx_extra: {} \n".format(blockstats['deteta'])
-	msg += "Size of tx_extra: {} \n \n".format(blockstats['txes'])
-
-	msg += "Percentage of txs in the block: {} % \n".format(blockstats['txp'])
-	msg += "Percentage of tx_extra in the block: {} % ```".format(blockstats['txep'])
+	msg += "\n\nPercentage of txs in the block: {} %".format(blockstats['txp'])
+	msg += "\nPercentage of tx_extra in the block: {} % ```".format(blockstats['txep'])
 
 	# msg += blockstats['pingrock']
 	print(msg)
