@@ -23,7 +23,12 @@ def connect_to_turtlecoind():
 	global tc
 	global tclbh
 	tc = turtlecoin.TurtleCoind(host='public.turtlenode.io', port=11898)
-	tclbh = tc.get_last_block_header()['result']
+	try:
+		tclbh = tc.get_last_block_header()['result']
+	except (JSONDecodeError, ConnectionError):
+		while tc.get_block_count()['json_rpc'] != "2.0":
+			asyncio.sleep(5)
+			tclbh = tc.get_last_block_header()['result']
 
 
 def decode_tx_extra(tx_extra_hex):
@@ -57,15 +62,15 @@ def decode_tx_extra(tx_extra_hex):
 			custom_data_arr.append(data)
 			curr_index += subfield_size
 		else:
-			tx_extra_decoded += "Hm, something went wrong. I got an invalid subfield tag of {tag}\n".format(tag=tx_extra_hex[curr_index:curr_index + 2])
+			tx_extra_decoded += f"Hm, something went wrong. I got an invalid subfield tag of {tx_extra_hex[curr_index:curr_index + 2]}\n"
 			curr_index += 2
 
 	if payment_id:
-		tx_extra_decoded += "Payment ID: {}\n".format(payment_id)
+		tx_extra_decoded += f"\nPayment ID: {payment_id}"
 
 	for hash in custom_data_arr:
 		utf8_str = None
-		tx_extra_decoded += "Custom Data Hex: {}\n".format(hash)
+		tx_extra_decoded += f"\nCustom Data Hex: {hash}"
 		# try decoding as utf-8 data as well
 		try:
 			utf8_str = bytearray.fromhex(hash).decode()
@@ -73,7 +78,7 @@ def decode_tx_extra(tx_extra_hex):
 			pass
 
 		if utf8_str:
-			tx_extra_decoded += "Custom Data UTF-8: {}\n".format(utf8_str)
+			tx_extra_decoded += f"\nCustom Data UTF-8: {utf8_str}"
 
 	return tx_extra_decoded
 
@@ -102,21 +107,20 @@ def getstats(height):
 	pingrock = "<@" + rock + ">"
 	blocktime = ""
 	if timed <= 4:
-		blocktime += "Block was too fast, {timed} seconds".format(timed=timed)
+		blocktime += f"Block was too fast, {timed} seconds"
 		pingrock += ""
 	elif timed >= 90:
-		blocktime += 'Took too long, {timed} seconds.'.format(timed=timed)
+		blocktime += f'Took too long, {timed} seconds.'
 		pingrock += ""
 	else:
-		blocktime += "Took {timed} seconds to make, pretty nice".format(timed=timed)
+		blocktime += f"Took {timed} seconds to make, pretty nice"
 		pingrock = ""
 
 	# size of the block
-	bsize = tc.get_block(hash)
-	bsizes = bsize['result']['block']['blockSize']
+	txs = tc.get_block(hash) #changed 2 vars to one var, keeping name. 
+	bsizes = txs['result']['block']['blockSize']
 
 	# number of transaction hashes in the block
-	txs = tc.get_block(hash)
 	ntxs = len(txs['result']['block']['transactions'])
 
 	# each tx hash in the block
@@ -180,7 +184,7 @@ class client_check(object):
 
 	def __call__(self, func):
 		if not self.client:
-			print("Cannot connect to Discord without a valid token. bot will attempt to print to console.")
+			print("Cannot connect to Discord without a valid token. Bot will attempt to print to console.")
 			# Return the function unchanged, not decorated with Discord API.
 			return func
 		return self.client.event(func)
