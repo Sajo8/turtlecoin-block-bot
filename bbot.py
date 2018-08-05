@@ -117,7 +117,7 @@ def getstats(height):
 		pingrock = ""
 
 	# size of the block
-	txs = tc.get_block(hash) #changed 2 vars to one var, keeping name. 
+	txs = tc.get_block(hash)  # changed 2 vars to one var, keeping name.
 	bsizes = txs['result']['block']['blockSize']
 
 	# number of transaction hashes in the block

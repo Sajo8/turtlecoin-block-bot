@@ -1,1 +1,7 @@
 tokenfile
+
+## cache files ##
+__pycache__
+.cache
+_py3env
+.pytest_cache
