@@ -10,7 +10,7 @@ import random
 client = None
 tc = None
 tclbh = None
-token = open('tokenfile').read()
+token = None #open('tokenfile').read()
 
 if token:
 	if token == 'YOUR-TOKEN-HERE':
@@ -148,7 +148,9 @@ def getstats(height):
 	# % of tx_extra in the block
 	txep = txes / bsizes * 100
 
-	return {'height': height, 'hash': hash, 'orphan': orphan, 'reward': breward, 'bsizes': bsizes, 'blocktime': blocktime, 'ntxs': ntxs, 'hashes': hashes, 'hahsizes': hahsizes, 'txsizes': txsizes, 'teta': teta, 'deteta': deteta, 'txes': txes, 'txp': txp, 'txep': txep, 'pingrock': pingrock}
+	return {'height': height, 'hash': hash, 'orphan': orphan, 'reward': breward, \
+	'bsizes': bsizes, 'blocktime': blocktime, 'ntxs': ntxs, 'hashes': hashes, 'hahsizes': hahsizes, \
+	'txsizes': txsizes, 'teta': teta, 'deteta': deteta, 'txes': txes, 'txp': txp, 'txep': txep, 'pingrock': pingrock}
 
 
 def prettyPrintStats(blockstats):
