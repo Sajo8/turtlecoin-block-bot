@@ -135,9 +135,10 @@ def getstats(height):
 
 	for hash in hashes:
 		# tx extra hash
-		teta.append(tc.get_transaction(hash)['result']['tx']['extra'])
+		extra = tc.get_transaction(hash)['result']['tx']['extra']
+		teta.append(extra)
 		# Decoded version of tx_extra:
-		deteta.append(decode_tx_extra(teta))
+		deteta.append(decode_tx_extra(extra))
 
 	# size of tx extra
 	txes = bsizes - txsizes
