@@ -11,6 +11,7 @@ client = None
 tc = None
 tclbh = None
 token = None #open('tokenfile').read()
+csuccess = None
 
 if token:
 	if token == 'YOUR-TOKEN-HERE':
@@ -22,13 +23,23 @@ if token:
 def connect_to_turtlecoind():
 	global tc
 	global tclbh
-	tc = turtlecoin.TurtleCoind(host='public.turtlenode.io', port=11898)
+	global csuccess
+	atno = 2
 	try:
+		tc = turtlecoin.TurtleCoind(host='public.turtlenode.io', port=11898)
 		tclbh = tc.get_last_block_header()['result']
-	except (JSONDecodeError, ConnectionError):
-		while tc.get_block_count()['json_rpc'] != "2.0":
-			asyncio.sleep(5)
-			tclbh = tc.get_last_block_header()['result']
+		csuccess == True
+	except (ValueError, ConnectionError):
+		print("Couldn't connect")
+		print(f"Attempt {atno} to connect")
+		atno += 1
+		while csuccess == None:
+			time.sleep(5)
+			continue
+	else:
+		print("Connected, moving on")
+
+
 
 
 def decode_tx_extra(tx_extra_hex):
@@ -73,111 +84,123 @@ def decode_tx_extra(tx_extra_hex):
 		# try decoding the hex bytes as a utf-8 string.
 		try:
 			str_data = bytearray.fromhex(hash).decode('utf-8')
-			tx_extra_decoded.append(f"Custom Data (utf-8 decoded): {str_data}")
+			tx_extra_decoded.append(f"Custom Data (UTF-8 decoded): {str_data}")
 		except ValueError as err:
 			pass
 
 	return tx_extra_decoded
 
+success = None
 
 def getstats(height):
-	tcgl = tc.get_last_block_header()['result']['block_header']
+	global success
+	try:
+		tcgl = tc.get_last_block_header()['result']['block_header']
 
-	# height of the latest block
-	height = tcgl['height']
-	# hash of latest block
-	hash = tcgl['hash']
-	# whether atest block is orphan or not
-	orphan = tcgl['orphan_status']
+		# height of the latest block
+		height = tcgl['height']
+		# hash of latest block
+		hash = tcgl['hash']
+		# whether atest block is orphan or not
+		orphan = tcgl['orphan_status']
 
-	# reward of the latest block
-	reward = tcgl['reward']
-	breward = reward / 100
+		# reward of the latest block
+		reward = tcgl['reward']
+		breward = reward / 100
 
-	# wheter the time the block took to make is acceptable or not
-	timex = tcgl['timestamp']
-	prevhash = tcgl['prev_hash']
-	glb = tc.get_block(prevhash)
-	time2 = glb['result']['block']['timestamp']
-	timed = timex - time2
-	rock = "388916188715155467"
-	pingrock = "<@" + rock + ">"
-	blocktime = ""
-	if timed <= 4:
-		blocktime += f"Block was too fast, {timed} seconds"
-		pingrock += ""
-	elif timed >= 90:
-		blocktime += f'Took too long, {timed} seconds.'
-		pingrock += ""
-	else:
-		blocktime += f"Took {timed} seconds to make, pretty nice"
-		pingrock = ""
+		# wheter the time the block took to make is acceptable or not
+		timex = tcgl['timestamp']
+		prevhash = tcgl['prev_hash']
+		glb = tc.get_block(prevhash)
+		time2 = glb['result']['block']['timestamp']
+		timed = timex - time2
+		rock = "388916188715155467"
+		pingrock = "<@" + rock + ">"
+		blocktime = ""
+		if timed <= 4:
+			blocktime += f"Block was too fast, {timed} seconds"
+			pingrock += ""
+		elif timed >= 90:
+			blocktime += f'Took too long, {timed} seconds.'
+			pingrock += ""
+		else:
+			blocktime += f"Took {timed} seconds to make, pretty nice"
+			pingrock = ""
 
-	# size of the block
-	txs = tc.get_block(hash)  # changed 2 vars to one var, keeping name.
-	bsizes = txs['result']['block']['blockSize']
+		# size of the block
+		txs = tc.get_block(hash)  # changed 2 vars to one var, keeping name.
+		bsizes = txs['result']['block']['blockSize']
 
-	# number of transaction hashes in the block
-	ntxs = len(txs['result']['block']['transactions'])
+		# number of transaction hashes in the block
+		ntxs = len(txs['result']['block']['transactions'])
 
-	# each tx hash in the block
-	hashes = [x['hash'] for x in txs['result']['block']['transactions']]
+		# each tx hash in the block
+		hashes = [x['hash'] for x in txs['result']['block']['transactions']]
 
-	# size of each tx
-	hahsizes = [z['size'] for z in txs['result']['block']['transactions']]
+		# size of each tx
+		hahsizes = [z['size'] for z in txs['result']['block']['transactions']]
 
-	# size of all the txs
-	txsize = txs['result']['block']
-	txsizes = txsize['transactionsCumulativeSize']
+		# size of all the txs
+		txsize = txs['result']['block']
+		txsizes = txsize['transactionsCumulativeSize']
 
-	teta = []
-	deteta = []
+		teta = []
+		deteta = []
 
-	for hash in hashes:
-		# tx extra hash
-		extra = tc.get_transaction(hash)['result']['tx']['extra']
-		teta.append(extra)
-		# Decoded version of tx_extra:
-		deteta.append(decode_tx_extra(extra))
+		for hash in hashes:
+			# tx extra hash
+			extra = tc.get_transaction(hash)['result']['tx']['extra']
+			teta.append(extra)
+			# Decoded version of tx_extra:
+			deteta.append(decode_tx_extra(extra))
 
-	# size of tx extra
-	txes = bsizes - txsizes
+		# size of tx extra
+		txes = bsizes - txsizes
 
-	# % of txs in the block
-	txp = txsizes / bsizes * 100
+		# % of txs in the block
+		txp = txsizes / bsizes * 100
 
-	# % of tx_extra in the block
-	txep = txes / bsizes * 100
+		# % of tx_extra in the block
+		txep = txes / bsizes * 100
 
-	return {'height': height, 'hash': hash, 'orphan': orphan, 'reward': breward, \
-	'bsizes': bsizes, 'blocktime': blocktime, 'ntxs': ntxs, 'hashes': hashes, 'hahsizes': hahsizes, \
-	'txsizes': txsizes, 'teta': teta, 'deteta': deteta, 'txes': txes, 'txp': txp, 'txep': txep, 'pingrock': pingrock}
+		return {'height': height, 'hash': hash, 'orphan': orphan, 'reward': breward, \
+		'bsizes': bsizes, 'blocktime': blocktime, 'ntxs': ntxs, 'hashes': hashes, 'hahsizes': hahsizes, \
+		'txsizes': txsizes, 'teta': teta, 'deteta': deteta, 'txes': txes, 'txp': txp, 'txep': txep, 'pingrock': pingrock}
 
+		success = True
+	
+	except (ValueError, ConnectionError, http.client.HTTPException):
+		success = False
 
 def prettyPrintStats(blockstats):
-	msg = "```WE FOUND A NEW BLOCK!\n"
-	msg += "\nHeight: {} \n".format(blockstats['height'])
-	msg += "Hash: {} \n".format(blockstats['hash'])
-	msg += "Orphan: {} \n".format(blockstats['orphan'])
-	msg += "Reward: {} \n".format(blockstats['reward'])
-	msg += "Size: {} \n".format(blockstats['bsizes'])
-	msg += "Time took to make: {} \n".format(blockstats['blocktime'])
+	if success:
+		msg = "```WE FOUND A NEW BLOCK!\n"
+		msg += "\nHeight: {} \n".format(blockstats['height'])
+		msg += "Hash: {} \n".format(blockstats['hash'])
+		msg += "Orphan: {} \n".format(blockstats['orphan'])
+		msg += "Reward: {} \n".format(blockstats['reward'])
+		msg += "Size: {} \n".format(blockstats['bsizes'])
+		msg += "Time took to make: {} \n".format(blockstats['blocktime'])
 
-	msg += "\nNo. of txs in the block: {}".format(blockstats['ntxs'])
-	msg += "\nTotal size of the txs: {}".format(blockstats['txsizes'])
-	msg += "\nTotal size of tx_extra(s): {}".format(blockstats['txes'])
-	for idx, hash in enumerate(blockstats['hashes']):
-		msg += f"\n\nTx {idx} (size {blockstats['hahsizes'][idx]}):"
-		msg += f"\n    hash: {hash}"
-		msg += f"\n    tx_extra: {blockstats['teta'][idx]}"
-		if idx < len(blockstats['deteta']):
-			for line in blockstats['deteta'][idx]:
-				msg += f"\n    {line}"
+		msg += "\nNo. of txs in the block: {}".format(blockstats['ntxs'])
+		msg += "\nTotal size of the txs: {}".format(blockstats['txsizes'])
+		msg += "\nTotal size of tx_extra(s): {}".format(blockstats['txes'])
+		for idx, hash in enumerate(blockstats['hashes']):
+			msg += f"\n\nTx {idx} (size {blockstats['hahsizes'][idx]}):"
+			msg += f"\n    Hash: {hash}"
+			msg += f"\n    tx_extra: {blockstats['teta'][idx]}"
+			if idx < len(blockstats['deteta']):
+				for line in blockstats['deteta'][idx]:
+					msg += f"\n    {line}"
 
-	msg += "\n\nPercentage of txs in the block: {} %".format(blockstats['txp'])
-	msg += "\nPercentage of tx_extra in the block: {} % ```".format(blockstats['txep'])
+		msg += "\n\nPercentage of txs in the block: {} %".format(blockstats['txp'])
+		msg += "\nPercentage of tx_extra in the block: {} % ```".format(blockstats['txep'])
 
-	# msg += blockstats['pingrock']
+		# msg += blockstats['pingrock']
+
+	else:
+		msg = "Error occured, could not retrieve stats"
+
 	print(msg)
 
 	return msg
@@ -200,7 +223,17 @@ async def on_ready():
 	print("connected")
 	height = tclbh['block_header']['height']
 	while True:
-		nheight = tc.get_block_count()['result']['count']
+		bsuccess = None
+		try:
+			nheight = tc.get_block_count()['result']['count']
+			bsuccess == True
+		except (ValueError, ConnectionError, http.client.HTTPException):
+			while csuccess == None:
+				asyncio.sleep(1)
+				continue
+		else:
+			pass
+
 		if height != nheight:
 			prettyPrintStats(getstats(nheight))
 			if client:
