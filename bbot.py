@@ -266,21 +266,20 @@ async def on_ready():
 		try:
 			nheight = tc.get_block_count()['result']['count']
 			bsuccess == True
-		except (ValueError, ConnectionError, http.client.HTTPException) as e:
+			if height != nheight:
+				prettyPrintStats(getstats(nheight))
+				if client:
+					await client.send_message(discord.Object(id='459931714471460864'), prettyPrintStats(getstats(nheight)))
+				print("val changed")
+				print(nheight)
+				print(height)
+				height = nheight
+				print(height)
+			await asyncio.sleep(0.5)
+		except Exception as e:
 			logging.error(e)
 			print("get_block_count() error")
 			asyncio.sleep(1)
-
-		if height != nheight:
-			prettyPrintStats(getstats(nheight))
-			if client:
-				await client.send_message(discord.Object(id='459931714471460864'), prettyPrintStats(getstats(nheight)))
-			print("val changed")
-			print(nheight)
-			print(height)
-			height = nheight
-			print(height)
-		await asyncio.sleep(0.5)
 
 
 def start_local_event_loop():
