@@ -9,7 +9,7 @@ import hexdump
 import http
 import logging
 
-ENABLE_DEBUG_LOG = False
+ENABLE_DEBUG_LOG = True
 
 
 if ENABLE_DEBUG_LOG:
