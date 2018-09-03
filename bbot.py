@@ -1,4 +1,4 @@
-import discord
+import discord #python3 -m pip install -U https://github.com/Rapptz/discord.py/archive/rewrites.zip#egg=discord.py
 import asyncio
 import turtlecoin
 import json
@@ -8,6 +8,7 @@ import random
 import hexdump
 import http
 import logging
+from collections import deque
 
 ENABLE_DEBUG_LOG = True
 
@@ -211,7 +212,7 @@ def getstats(height):
 
 def prettyPrintStats(blockstats):
 	if success:
-		msg = "```WE FOUND A NEW BLOCK!\n"
+		msg = "WE FOUND A NEW BLOCK!\n"
 		msg += "\nHeight: {} \n".format(blockstats['height'])
 		msg += "Hash: {} \n".format(blockstats['hash'])
 		msg += "Orphan: {} \n".format(blockstats['orphan'])
@@ -233,7 +234,7 @@ def prettyPrintStats(blockstats):
 					msg += f"\n    {line}"
 
 		msg += "\n\nPercentage of txs in the block: {} %".format(blockstats['txp'])
-		msg += "\nPercentage of tx_extra in the block: {} % ```".format(blockstats['txep'])
+		msg += "\nPercentage of tx_extra in the block: {} % ".format(blockstats['txep'])
 
 		# msg += blockstats['pingrock']
 
@@ -261,25 +262,35 @@ class client_check(object):
 async def on_ready():
 	print("connected")
 	height = tclbh['block_header']['height']
+	if client:
+		channel = client.get_channel(459931714471460864)
+	global displayHeight 
+	displayHeight = deque(['0','0','0','0','0','0','0','0','0','0','0','0','0','0','0']) #this avoid display twice the same block on discord
 	while True:
 		bsuccess = None
 		try:
 			nheight = tc.get_block_count()['result']['count']
 			bsuccess == True
-			if height != nheight:
-				prettyPrintStats(getstats(nheight))
-				if client:
-					await client.send_message(discord.Object(id='459931714471460864'), prettyPrintStats(getstats(nheight)))
+			if height != nheight and nheight not in displayHeight:
 				print("val changed")
 				print(nheight)
 				print(height)
 				height = nheight
 				print(height)
+				displayHeight.append(nheight)
+				displayHeight.popleft()
+				if client:
+					discordMsg =prettyPrintStats(getstats(nheight))
+					[await channel.send("```\n" + discordMsg[i: i + 1990] + "```") for i in range(0, len(discordMsg), 1990)]
+
+				else:
+					prettyPrintStats(getstats(nheight))
+	
 			await asyncio.sleep(0.5)
 		except Exception as e:
-			logging.error(e)
-			print("get_block_count() error")
-			asyncio.sleep(1)
+			logging.error(str(e.__class__) + "  -  " + str(e))
+			print("get_block_count() error : " + str(e.__class__))
+			await asyncio.sleep(1)
 
 
 def start_local_event_loop():
