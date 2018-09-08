@@ -1,4 +1,4 @@
-import discord #python3 -m pip install -U https://github.com/Rapptz/discord.py/archive/rewrites.zip#egg=discord.py
+import discord #python3 -m pip install -U https://github.com/Rapptz/discord.py/archive/rewrite.zip#egg=discord.py
 import asyncio
 import turtlecoin
 import json
