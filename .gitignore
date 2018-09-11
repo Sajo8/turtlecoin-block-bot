@@ -1,7 +1,9 @@
-tokenfile
+tokenfile.txt
+bbot.log
 
 ## cache files ##
 __pycache__
 .cache
 _py3env
 .pytest_cache
+

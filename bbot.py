@@ -30,7 +30,7 @@ token = None
 csuccess = None
 
 try:
-	token = open('tokenfile').read()
+	token = open('tokenfile.txt').read()
 except:
 	pass
 
@@ -272,11 +272,7 @@ async def on_ready():
 			nheight = tc.get_block_count()['result']['count']
 			bsuccess == True
 			if height != nheight and nheight not in displayHeight:
-				print("val changed")
-				print(nheight)
-				print(height)
 				height = nheight
-				print(height)
 				displayHeight.append(nheight)
 				displayHeight.popleft()
 				if client:
