@@ -1,3 +1,20 @@
+"""
+    Copyright (C) 2018 Sajo8
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 import discord #python3 -m pip install -U https://github.com/Rapptz/discord.py/archive/rewrite.zip#egg=discord.py
 import asyncio
 import turtlecoin
@@ -9,6 +26,12 @@ import hexdump
 import http
 import logging
 from collections import deque
+
+print("""\n\
+    turtlecoin-block-monitor  Copyright (C) 2018 Sajo8
+    This program comes with ABSOLUTELY NO WARRANTY
+    This is free software, and you are welcome to redistribute it
+    under certain conditions\n""")
 
 ENABLE_DEBUG_LOG = True
 
@@ -60,7 +83,7 @@ def connect_to_turtlecoind(atno = 2):
 		
 		logging.debug("[TURTLECOIN] Requesting get_last_block_header() - Success")
 		logging.debug(tclbh)
-		csuccess == True
+		csuccess = True
 	except (ValueError, ConnectionError) as e:
 		logging.error(e)
 		print(f"Couldn't connect. Attempt {atno} to connect")
@@ -69,7 +92,7 @@ def connect_to_turtlecoind(atno = 2):
 		connect_to_turtlecoind(atno)
 
 	else:
-		print("Connected, moving on")
+		print("Connected to turtlenode")
 
 
 
@@ -260,7 +283,7 @@ class client_check(object):
 
 @client_check(client)
 async def on_ready():
-	print("connected")
+	print("Connected to Discord")
 	height = tclbh['block_header']['height']
 	if client:
 		channel = client.get_channel(459931714471460864)
@@ -277,7 +300,7 @@ async def on_ready():
 				displayHeight.popleft()
 				if client:
 					discordMsg =prettyPrintStats(getstats(nheight))
-					[await channel.send("```\n" + discordMsg[i: i + 1990] + "```") for i in range(0, len(discordMsg), 1990)]
+					[await channel.send("```\n" + discordMsg[i: i + 1990] + "```---") for i in range(0, len(discordMsg), 1990)]
 
 				else:
 					prettyPrintStats(getstats(nheight))
