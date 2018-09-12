@@ -1,8 +1,0 @@
-[
-  "test_decode_tx_extra.py::test_known_hashes",
-  "test_decode_tx_extra.py::test_turtle_drawing",
-  "test_decode_tx_extra.py::test_bad_data",
-  "test_decode_tx_extra.py::test_empty_string",
-  "test_decode_tx_extra.py::test_wrong_arguments",
-  "test_pretty_print_stats.py::test_with_six_transactions"
-]
