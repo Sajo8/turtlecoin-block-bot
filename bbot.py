@@ -1,43 +1,98 @@
-import discord
+"""
+    Copyright (C) 2018 Sajo8
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+import discord #python3 -m pip install -U https://github.com/Rapptz/discord.py/archive/rewrite.zip#egg=discord.py
 import asyncio
 import turtlecoin
 import json
 import sys
 import time
 import random
+import hexdump
+import http
+import logging
+from collections import deque
 
+print("""\n\
+    turtlecoin-block-monitor  Copyright (C) 2018 Sajo8
+    This program comes with ABSOLUTELY NO WARRANTY
+    This is free software, and you are welcome to redistribute it
+    under certain conditions\n""")
+
+ENABLE_DEBUG_LOG = True
+
+
+if ENABLE_DEBUG_LOG:
+	logging.basicConfig(
+		filename="bbot.log",  
+		level=logging.DEBUG,
+		format="%(asctime)s:%(levelname)s:%(message)s"
+		)
+else:
+	logging.disable(logging.CRITICAL)
+	
 # discord stuff
 client = None
 tc = None
 tclbh = None
-token = None #open('tokenfile').read()
+token = None
 csuccess = None
 
-if token:
-	if token == 'YOUR-TOKEN-HERE':
-		token = None
-	else:
+try:
+	token = open('tokenfile.txt').read()
+except:
+	pass
+
+
+logging.debug("Starting turtlecoin-block-stat")
+
+if token and token != 'YOUR-TOKEN-HERE':
+	try:
 		client = discord.Client()
+	except:
+		print("Couldn't connect to discord client")
+else:
+	print("Please configure your Discord token")
 
 
-def connect_to_turtlecoind():
+def connect_to_turtlecoind(atno = 2):
 	global tc
 	global tclbh
 	global csuccess
-	atno = 2
+	
 	try:
+		logging.debug("[TURTLECOIN] Connection to public.turtlenode.io")
 		tc = turtlecoin.TurtleCoind(host='public.turtlenode.io', port=11898)
+		
+		logging.debug("[TURTLECOIN]Requesting get_last_block_header()")
 		tclbh = tc.get_last_block_header()['result']
-		csuccess == True
-	except (ValueError, ConnectionError):
-		print("Couldn't connect")
-		print(f"Attempt {atno} to connect")
+		
+		logging.debug("[TURTLECOIN] Requesting get_last_block_header() - Success")
+		logging.debug(tclbh)
+		csuccess = True
+	except (ValueError, ConnectionError) as e:
+		logging.error(e)
+		print(f"Couldn't connect. Attempt {atno} to connect")
 		atno += 1
-		while csuccess == None:
-			time.sleep(5)
-			continue
+		time.sleep(5)
+		connect_to_turtlecoind(atno)
+
 	else:
-		print("Connected, moving on")
+		print("Connected to turtlenode")
 
 
 
@@ -51,6 +106,7 @@ def decode_tx_extra(tx_extra_hex):
 	payment_id = None
 	tx_extra_decoded = []  # decoded data will be a list of strings, to be formatted later
 
+	logging.debug("[TURTLECOIN] decode_tx_extra()")
 	if not isinstance(tx_extra_hex, str):
 		raise TypeError(f'decode_tx_extra() expects 1 argument of type string, but received {tx_extra_hex}')
 
@@ -61,7 +117,7 @@ def decode_tx_extra(tx_extra_hex):
 			curr_index = len(tx_extra_hex)
 		elif tx_extra_hex.startswith('01', curr_index):  # payment ID
 			curr_index += 2
-			payment_id = tx_extra_hex[curr_index:curr_index + 64]
+			transactionPubKey = tx_extra_hex[curr_index:curr_index + 64]
 			curr_index += 64
 		elif tx_extra_hex.startswith('02', curr_index):  # extra nonce (custom data)
 			# next byte will specify size
@@ -76,17 +132,13 @@ def decode_tx_extra(tx_extra_hex):
 			tx_extra_decoded.append(f"Hm, something went wrong. I got an invalid subfield tag of {tx_extra_hex[curr_index:curr_index + 2]}")
 			curr_index += 2
 
-	if payment_id:
-		tx_extra_decoded.append(f"Payment ID: {payment_id}")
+	if transactionPubKey:
+		tx_extra_decoded.append(f"Transaction public key: {transactionPubKey}")
 
 	for hash in custom_data_arr:
-		tx_extra_decoded.append(f"Custom Data (hex): {hash}")
-		# try decoding the hex bytes as a utf-8 string.
-		try:
-			str_data = bytearray.fromhex(hash).decode('utf-8')
-			tx_extra_decoded.append(f"Custom Data (UTF-8 decoded): {str_data}")
-		except ValueError as err:
-			pass
+		hexView = hexdump.hexdump((bytes.fromhex(hash)), result='return')
+		hexView = "".join("        " + x +"\n" for x in hexView.split("\n"))
+		tx_extra_decoded.append(f"Custom Data (hexview): \n{hexView}")
 
 	return tx_extra_decoded
 
@@ -94,6 +146,7 @@ success = None
 
 def getstats(height):
 	global success
+	logging.debug("[TURTLECOIN] getstats() -> " + str(height))
 	try:
 		tcgl = tc.get_last_block_header()['result']['block_header']
 
@@ -146,13 +199,17 @@ def getstats(height):
 
 		teta = []
 		deteta = []
+		paymentId = []
 
-		for hash in hashes:
+		for txhash in hashes:
+			# get tx
+			transaction = tc.get_transaction(txhash)['result']
 			# tx extra hash
-			extra = tc.get_transaction(hash)['result']['tx']['extra']
+			extra = transaction['tx']['extra']
 			teta.append(extra)
 			# Decoded version of tx_extra:
 			deteta.append(decode_tx_extra(extra))
+			paymentId.append(transaction['txDetails']['paymentId'])
 
 		# size of tx extra
 		txes = bsizes - txsizes
@@ -163,18 +220,22 @@ def getstats(height):
 		# % of tx_extra in the block
 		txep = txes / bsizes * 100
 
+		success = True
+		
 		return {'height': height, 'hash': hash, 'orphan': orphan, 'reward': breward, \
 		'bsizes': bsizes, 'blocktime': blocktime, 'ntxs': ntxs, 'hashes': hashes, 'hahsizes': hahsizes, \
-		'txsizes': txsizes, 'teta': teta, 'deteta': deteta, 'txes': txes, 'txp': txp, 'txep': txep, 'pingrock': pingrock}
+		'txsizes': txsizes, 'teta': teta, 'deteta': deteta, 'txes': txes, 'txp': txp, 'txep': txep, 'pingrock': pingrock, 'paymentId':paymentId}
 
-		success = True
+		
 	
-	except (ValueError, ConnectionError, http.client.HTTPException):
+	except (ValueError, ConnectionError, http.client.HTTPException) as e:
+		logging.error(e)
+		print("GetStat Error")
 		success = False
 
 def prettyPrintStats(blockstats):
 	if success:
-		msg = "```WE FOUND A NEW BLOCK!\n"
+		msg = "WE FOUND A NEW BLOCK!\n"
 		msg += "\nHeight: {} \n".format(blockstats['height'])
 		msg += "Hash: {} \n".format(blockstats['hash'])
 		msg += "Orphan: {} \n".format(blockstats['orphan'])
@@ -188,13 +249,15 @@ def prettyPrintStats(blockstats):
 		for idx, hash in enumerate(blockstats['hashes']):
 			msg += f"\n\nTx {idx} (size {blockstats['hahsizes'][idx]}):"
 			msg += f"\n    Hash: {hash}"
+			if len(blockstats['paymentId'][idx])>0:
+				msg += f"\n    Payment Id: {blockstats['paymentId'][idx]}"
 			msg += f"\n    tx_extra: {blockstats['teta'][idx]}"
 			if idx < len(blockstats['deteta']):
 				for line in blockstats['deteta'][idx]:
 					msg += f"\n    {line}"
 
 		msg += "\n\nPercentage of txs in the block: {} %".format(blockstats['txp'])
-		msg += "\nPercentage of tx_extra in the block: {} % ```".format(blockstats['txep'])
+		msg += "\nPercentage of tx_extra in the block: {} % ".format(blockstats['txep'])
 
 		# msg += blockstats['pingrock']
 
@@ -220,30 +283,33 @@ class client_check(object):
 
 @client_check(client)
 async def on_ready():
-	print("connected")
+	print("Connected to Discord")
 	height = tclbh['block_header']['height']
+	if client:
+		channel = client.get_channel(459931714471460864)
+	global displayHeight 
+	displayHeight = deque(['0','0','0','0','0','0','0','0','0','0','0','0','0','0','0']) #this avoid display twice the same block on discord
 	while True:
 		bsuccess = None
 		try:
 			nheight = tc.get_block_count()['result']['count']
 			bsuccess == True
-		except (ValueError, ConnectionError, http.client.HTTPException):
-			while csuccess == None:
-				asyncio.sleep(1)
-				continue
-		else:
-			pass
+			if height != nheight and nheight not in displayHeight:
+				height = nheight
+				displayHeight.append(nheight)
+				displayHeight.popleft()
+				if client:
+					discordMsg =prettyPrintStats(getstats(nheight))
+					[await channel.send("```\n" + discordMsg[i: i + 1990] + "```---") for i in range(0, len(discordMsg), 1990)]
 
-		if height != nheight:
-			prettyPrintStats(getstats(nheight))
-			if client:
-				await client.send_message(discord.Object(id='459931714471460864'), prettyPrintStats(getstats(nheight)))
-			print("val changed")
-			print(nheight)
-			print(height)
-			height = nheight
-			print(height)
-		await asyncio.sleep(0.5)
+				else:
+					prettyPrintStats(getstats(nheight))
+	
+			await asyncio.sleep(0.5)
+		except Exception as e:
+			logging.error(str(e.__class__) + "  -  " + str(e))
+			print("get_block_count() error : " + str(e.__class__))
+			await asyncio.sleep(1)
 
 
 def start_local_event_loop():
